@@ -1,0 +1,23 @@
+{
+  "visual": {
+    "name": "bulletChartByOKViz",
+    "displayName": "Bullet Chart by OKViz",
+    "guid": "PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA",
+    "visualClassName": "Visual",
+    "version": "2.1.0",
+    "description": "Inspired by Stephen Few, the Bullet Chart by OKViz allows you to show data values, saving precious space on your reports. It can render single or multiple values in a series and show comparison values, different targets, and performance areas. Horizontal and vertical mode included.",
+    "supportUrl": "http://okviz.com/bullet-chart/",
+    "gitHubUrl": "https://github.com/okviz/bulletchart"
+  },
+  "apiVersion": "1.3.0",
+  "author": {
+    "name": "OKViz - a trademark of SQLBI",
+    "email": "support@okviz.com"
+  },
+  "assets": {
+    "icon": "assets/icon.png"
+  },
+  "externalJS": [],
+  "style": "style/visual.less",
+  "capabilities": "capabilities.json"
+}
