@@ -1,6 +1,6 @@
 /*
  *  Bullet Chart by OKViz
- *  v2.1.0
+ *  v2.1.1
  *
  *  Copyright (c) SQLBI. OKViz is a trademark of SQLBI Corp.
  *  All rights reserved.
@@ -303,7 +303,8 @@ module powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA 
                     let color: any;
 
                     if (dataValue.source.roles['Value']){ //value -> Value for legacy compatibility
-                        if (value !== null) {
+                 
+                        //if (value !== null) { //This cause problems when there is a comparison measure
 
                             dataPoint.value = value;
 
@@ -365,7 +366,7 @@ module powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA 
                             addRegularTooltip = true;
                             checkDomain = true;
                         }
-                    }
+                    //}
 
                     if (dataValue.source.roles['ComparisonValue']) { //comparison -> ComparisonValue for legacy compatibility
                         if (value !== null) {
@@ -723,9 +724,13 @@ module powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA 
 
                     let label = g.append('text')
                         .classed('label', true);
-                        
+                    
+
                     let fontSize = PixelConverter.fromPoint(this.model.settings.label.fontSize);
                     let props = { text: (this.model.settings.label.text && this.model.dataPoints.length <= 1 ? this.model.settings.label.text : dataPoint.displayName), fontFamily: 'sans-serif', fontSize: fontSize};
+
+                    if (props.text == undefined || !props.text) 
+                        props.text = '(Blank)';
 
                     let labelPos = { 
                         x:  bulletPosition.x + (isVertical ? (slotSize.width / 2) - (labelRotation == -90 ? ((labelSize.width - labelSize.height) / 2) : (labelRotation == -35 ? labelSize.height * 2 : 0 )) : labelSize.width),
@@ -1145,7 +1150,7 @@ module powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA 
             });
 
 
-            OKVizUtility.t(['Bullet Chart', '2.1.0'], this.element, options, this.host, {
+            OKVizUtility.t(['Bullet Chart', '2.1.1'], this.element, options, this.host, {
                 'cd1': this.model.settings.colorBlind.vision, 
                 'cd2': this.model.dataPoints[0].targets.length, 
                 'cd3': this.model.settings.targets.comparison,

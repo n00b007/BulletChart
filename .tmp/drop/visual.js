@@ -5042,7 +5042,7 @@ var powerbi;
 })(powerbi || (powerbi = {}));
 /*
  *  Bullet Chart by OKViz
- *  v2.1.0
+ *  v2.1.1
  *
  *  Copyright (c) SQLBI. OKViz is a trademark of SQLBI Corp.
  *  All rights reserved.
@@ -5230,52 +5230,52 @@ var powerbi;
                                 var value = dataValue.values[i];
                                 var color = void 0;
                                 if (dataValue.source.roles['Value']) {
-                                    if (value !== null) {
-                                        dataPoint.value = value;
-                                        if (dataValue.highlights) {
-                                            dataPoint.highlightValue = dataValue.highlights[i];
-                                            hasHighlights = true;
-                                        }
-                                        dataPoint.format = dataValue.source.format;
-                                        var displayName = void 0;
-                                        var identity = void 0;
-                                        if (category) {
-                                            identity = host.createSelectionIdBuilder().withCategory(category, i).createSelectionId();
-                                            displayName = PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.OKVizUtility.makeMeasureReadable(categories[i]);
-                                            if (settings.dataPoint.showAll) {
-                                                var defaultColor = { solid: { color: host.colorPalette.getColor(displayName).value } };
-                                                color = PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.getCategoricalObjectValue(category, i, 'dataPoint', 'fill', defaultColor).solid.color;
-                                            }
-                                            else {
-                                                color = settings.dataPoint.defaultFill.solid.color;
-                                            }
-                                            hasCategories = true;
-                                            showOnDemand = true;
-                                            dataPoint.tooltips.push({
-                                                displayName: (category.source.displayName || "Category"),
-                                                color: '#333',
-                                                value: displayName
-                                            });
+                                    //if (value !== null) { //This cause problems when there is a comparison measure
+                                    dataPoint.value = value;
+                                    if (dataValue.highlights) {
+                                        dataPoint.highlightValue = dataValue.highlights[i];
+                                        hasHighlights = true;
+                                    }
+                                    dataPoint.format = dataValue.source.format;
+                                    var displayName = void 0;
+                                    var identity = void 0;
+                                    if (category) {
+                                        identity = host.createSelectionIdBuilder().withCategory(category, i).createSelectionId();
+                                        displayName = PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.OKVizUtility.makeMeasureReadable(categories[i]);
+                                        if (settings.dataPoint.showAll) {
+                                            var defaultColor = { solid: { color: host.colorPalette.getColor(displayName).value } };
+                                            color = PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.getCategoricalObjectValue(category, i, 'dataPoint', 'fill', defaultColor).solid.color;
                                         }
                                         else {
-                                            identity = host.createSelectionIdBuilder().withMeasure(dataValue.source.queryName).createSelectionId();
-                                            displayName = dataValue.source.displayName;
-                                            var defaultColor = { solid: { color: host.colorPalette.getColor(displayName).value } };
-                                            color = PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.getValue(dataValue.source.objects, 'dataPoint', 'fill', defaultColor).solid.color;
+                                            color = settings.dataPoint.defaultFill.solid.color;
                                         }
-                                        dataPoint.displayName = String(displayName);
-                                        dataPoint.color = color;
-                                        dataPoint.selectionId = identity;
-                                        legendDataPoints.push({
-                                            displayName: String(displayName),
-                                            color: color,
-                                            showOnDemand: showOnDemand,
-                                            selectionId: identity
+                                        hasCategories = true;
+                                        showOnDemand = true;
+                                        dataPoint.tooltips.push({
+                                            displayName: (category.source.displayName || "Category"),
+                                            color: '#333',
+                                            value: displayName
                                         });
-                                        addRegularTooltip = true;
-                                        checkDomain = true;
                                     }
+                                    else {
+                                        identity = host.createSelectionIdBuilder().withMeasure(dataValue.source.queryName).createSelectionId();
+                                        displayName = dataValue.source.displayName;
+                                        var defaultColor = { solid: { color: host.colorPalette.getColor(displayName).value } };
+                                        color = PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.getValue(dataValue.source.objects, 'dataPoint', 'fill', defaultColor).solid.color;
+                                    }
+                                    dataPoint.displayName = String(displayName);
+                                    dataPoint.color = color;
+                                    dataPoint.selectionId = identity;
+                                    legendDataPoints.push({
+                                        displayName: String(displayName),
+                                        color: color,
+                                        showOnDemand: showOnDemand,
+                                        selectionId: identity
+                                    });
+                                    addRegularTooltip = true;
+                                    checkDomain = true;
                                 }
+                                //}
                                 if (dataValue.source.roles['ComparisonValue']) {
                                     if (value !== null) {
                                         dataPoint.comparisonValue = value;
@@ -5559,6 +5559,8 @@ var powerbi;
                                     .classed('label', true);
                                 var fontSize = PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.PixelConverter.fromPoint(this.model.settings.label.fontSize);
                                 var props = { text: (this.model.settings.label.text && this.model.dataPoints.length <= 1 ? this.model.settings.label.text : dataPoint.displayName), fontFamily: 'sans-serif', fontSize: fontSize };
+                                if (props.text == undefined || !props.text)
+                                    props.text = '(Blank)';
                                 var labelPos = {
                                     x: bulletPosition.x + (isVertical ? (slotSize.width / 2) - (labelRotation == -90 ? ((labelSize.width - labelSize.height) / 2) : (labelRotation == -35 ? labelSize.height * 2 : 0)) : labelSize.width),
                                     y: bulletPosition.y + (isVertical ? slotSize.height - labelPadding - (labelRotation == 0 ? 0 : labelSize.width + (labelRotation == -90 ? (labelSize.width / 2) : (labelRotation == -35 ? labelSize.height : 0))) : (slotSize.height / 2) + bulletPadding)
@@ -5887,7 +5889,7 @@ var powerbi;
                             });
                             d3.event.stopPropagation();
                         });
-                        PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.OKVizUtility.t(['Bullet Chart', '2.1.0'], this.element, options, this.host, {
+                        PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.OKVizUtility.t(['Bullet Chart', '2.1.1'], this.element, options, this.host, {
                             'cd1': this.model.settings.colorBlind.vision,
                             'cd2': this.model.dataPoints[0].targets.length,
                             'cd3': this.model.settings.targets.comparison,
@@ -6127,7 +6129,7 @@ var powerbi;
                 name: 'PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA',
                 displayName: 'Bullet Chart by OKViz',
                 class: 'Visual',
-                version: '2.1.0',
+                version: '2.1.1',
                 apiVersion: '1.3.0',
                 create: function (options) { return new powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.Visual(options); },
                 custom: true
