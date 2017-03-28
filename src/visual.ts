@@ -1,6 +1,5 @@
 /*
  *  Bullet Chart by OKViz
- *  v2.1.1
  *
  *  Copyright (c) SQLBI. OKViz is a trademark of SQLBI Corp.
  *  All rights reserved.
@@ -25,11 +24,23 @@
  *  THE SOFTWARE.
  */
 
+import tooltip = powerbi.extensibility.utils.tooltip;
+import TooltipEnabledDataPoint = powerbi.extensibility.utils.tooltip.TooltipEnabledDataPoint;
+import TooltipEventArgs = powerbi.extensibility.utils.tooltip.TooltipEventArgs;
+
 module powerbi.extensibility.visual {
+
+    interface VisualMeta {
+        name: string;
+        version: string;
+        dev: boolean;
+    }
 
     interface VisualViewModel {
         dataPoints: VisualDataPoint[];
-        legendDataPoints: VisualLegendDataPoint[];
+        enumerationDataPoints: VisualEnumerationDataPoint[];
+        legendDataPoints: LegendDataPoint[];
+        legendDataPointsWithCustomIcons: LegendCustomIcon[];
         domain: VisualDomain;
         settings: VisualSettings;
         hasHighlights: boolean;
@@ -50,7 +61,7 @@ module powerbi.extensibility.visual {
         tooltips?: VisualTooltipDataItem[];
     }
 
-    interface VisualLegendDataPoint {
+    interface VisualEnumerationDataPoint {
         displayName: string;    
         showOnDemand: boolean; 
         color?: string;
@@ -131,6 +142,14 @@ module powerbi.extensibility.visual {
             unit?: number;
             precision?: number; 
         };
+        legend: {
+            show: boolean;
+            position: string;
+            showTitle: boolean;
+            titleText: string;
+            labelColor: Fill;
+            fontSize: number;
+        };
 
         colorBlind?: {
             vision?: string;
@@ -177,6 +196,14 @@ module powerbi.extensibility.visual {
                show: true,
                fill: {solid: { color: "#777" } },
                unit: 0
+            },
+            legend: {
+                show: false,
+                position: 'Top',
+                showTitle: false,
+                titleText: '',
+                labelColor: {solid: { color: "#666" } },
+                fontSize: 8
             },
 
             colorBlind: {
@@ -249,6 +276,14 @@ module powerbi.extensibility.visual {
                     unit: getValue<number>(objects, "axis", "unit", settings.axis.unit),
                     precision: getValue<number>(objects, "axis", "precision", settings.axis.precision)
                 },
+                legend: {
+                    show: getValue<boolean>(objects, "legend", "show", settings.legend.show),
+                    position: getValue<string>(objects, "legend", "position", settings.legend.position),
+                    showTitle: getValue<boolean>(objects, "legend", "showTitle", settings.legend.showTitle),
+                    titleText: getValue<string>(objects, "legend", "titleText", settings.legend.titleText),
+                    labelColor: getValue<Fill>(objects, "legend", "labelColor", settings.legend.labelColor),
+                    fontSize: getValue<number>(objects, "legend", "fontSize", settings.legend.fontSize)
+                },
 
                 colorBlind: {
                      vision: getValue<string>(objects, "colorBlind", "vision", settings.colorBlind.vision),
@@ -276,12 +311,14 @@ module powerbi.extensibility.visual {
         }
 
         let dataPoints: VisualDataPoint[] = [];
-        let legendDataPoints: VisualLegendDataPoint[] = [];
+        let enumerationDataPoints: VisualEnumerationDataPoint[] = [];
+        let legendDataPoints: LegendDataPoint[] = [];
+        let legendDataPointsWithCustomIcons: LegendCustomIcon[] = [];
         let hasCategories = false;
 
         if (hasCategoricalData) {
             let dataCategorical = dataViews[0].categorical;
-            let category = (dataCategorical.categories ? dataCategorical.categories[0] : null);
+            let category = (dataCategorical.categories ? dataCategorical.categories[dataCategorical.categories.length - 1] : null);
             let categories = (category ? category.values : ['']);
 
             //Get DataPoints
@@ -307,12 +344,6 @@ module powerbi.extensibility.visual {
                         //if (value !== null) { //This cause problems when there is a comparison measure
 
                             dataPoint.value = value;
-
-                            if (dataValue.highlights) {
-                                dataPoint.highlightValue = <any>dataValue.highlights[i];
-                                hasHighlights = true;
-                            }
-
                             dataPoint.format = dataValue.source.format;
 
                             let displayName;
@@ -356,12 +387,41 @@ module powerbi.extensibility.visual {
                             dataPoint.color = color;
                             dataPoint.selectionId = identity;
 
-                            legendDataPoints.push({
+                            enumerationDataPoints.push({
                                 displayName: String(displayName),
                                 color: color,
                                 showOnDemand: showOnDemand,
                                 selectionId: identity
                             });
+
+                            if (i == 0) {
+                                legendDataPoints.push({
+                                    label: dataValue.source.displayName,
+                                    color: color,
+                                    icon: LegendIcon.Circle,
+                                    identity: identity,
+                                    selected: false
+                                });
+                            }
+
+                            if (dataValue.highlights) {
+                                dataPoint.highlightValue = <any>dataValue.highlights[i];
+                                hasHighlights = true;
+
+                              
+                                let highlightFormattedValue = OKVizUtility.Formatter.format(dataPoint.highlightValue, {
+                                    format: dataValue.source.format,
+                                    formatSingleValues: true,
+                                    allowFormatBeautification: false
+                                });
+                            
+                                dataPoint.tooltips.push(<VisualTooltipDataItem>{
+                                    displayName: 'Highlighted',
+                                    color: (color || '#333'),
+                                    value: highlightFormattedValue
+                                });
+                        
+                            }
 
                             addRegularTooltip = true;
                             checkDomain = true;
@@ -378,17 +438,28 @@ module powerbi.extensibility.visual {
 
                             dataPoint.comparisonColor = color;
 
-                            if (legendDataPoints.map(x => x.displayName).indexOf(displayName) === -1) {
+                            let identity = host.createSelectionIdBuilder().withMeasure(dataValue.source.queryName).createSelectionId();
 
-                                let identity = host.createSelectionIdBuilder().withMeasure(dataValue.source.queryName).createSelectionId();
+                            if (enumerationDataPoints.map(x => x.displayName).indexOf(displayName) === -1) {
 
-                                legendDataPoints.push({
+                                enumerationDataPoints.push({
                                     displayName: String(displayName),
                                     showOnDemand: false,
                                     color: color,
                                     selectionId: identity
                                 });
                             }
+                            
+                            if (i == 0) {
+                                legendDataPoints.push({
+                                    label: dataValue.source.displayName,
+                                    color: color,
+                                    icon: LegendIcon.Circle,
+                                    identity: identity,
+                                    selected: false
+                                });
+                            }
+                            
                             addRegularTooltip = true;
                             checkDomain = true;
                         }
@@ -397,20 +468,42 @@ module powerbi.extensibility.visual {
                      if (dataValue.source.roles['targets']) {
                         if (value !== null) {
                             
+                            let displayName = dataValue.source.displayName;
+                            let identity = host.createSelectionIdBuilder().withMeasure(dataValue.source.queryName).createSelectionId();
                             let availableMarkers = ['line', 'cross', 'circle'];
+                            
                             let idx = dataPoint.targets.length; 
                             if (idx >= availableMarkers.length) idx = 0;
+                            let marker = getValue<string>(dataValue.source.objects, 'targets', 'marker', availableMarkers[idx]);
 
                             let targetColor:any = getValue<Fill>(dataValue.source.objects, 'targets', 'fill', null);
-                            if (targetColor) targetColor = targetColor.solid.color;
-
+                            if (targetColor) {
+                                targetColor = targetColor.solid.color;
+                                color = targetColor;
+                            }
                             dataPoint.targets.push({
                                  value: value,
-                                 marker: getValue<string>(dataValue.source.objects, 'targets', 'marker', availableMarkers[idx]),
+                                 marker: marker,
                                  color: targetColor,
-                                 displayName: dataValue.source.displayName,
-                                 selectionId: host.createSelectionIdBuilder().withMeasure(dataValue.source.queryName).createSelectionId()
+                                 displayName: displayName,
+                                 selectionId: identity
                              }); 
+
+                             if (i == 0) {
+                                legendDataPoints.push({
+                                    label: dataValue.source.displayName,
+                                    color: color,
+                                    icon: LegendIcon.Circle,
+                                    identity: identity,
+                                    selected: false
+                                });
+                                legendDataPointsWithCustomIcons.push({
+                                    icon: marker,
+                                    color: settings.targets.markerFill.solid.color,
+                                    identity: identity
+                                });
+                                
+                            }
 
                             addRegularTooltip = true;
                             checkDomain = true;
@@ -458,6 +551,7 @@ module powerbi.extensibility.visual {
                             color: (color || '#333'),
                             value: formattedValue
                         });
+
                     }
                 }
 
@@ -469,10 +563,12 @@ module powerbi.extensibility.visual {
         if (!domain.end) domain.end = 0;
         if (domain.start > domain.end) 
             domain.end = domain.start;
-            
+
         return {
             dataPoints: dataPoints,
+            enumerationDataPoints: enumerationDataPoints,
             legendDataPoints: legendDataPoints,
+            legendDataPointsWithCustomIcons: legendDataPointsWithCustomIcons,
             domain: domain,
             settings: settings,
             hasHighlights: hasHighlights,
@@ -482,28 +578,38 @@ module powerbi.extensibility.visual {
 
 
     export class Visual implements IVisual {
+        private meta: VisualMeta;
         private host: IVisualHost;
         private selectionIdBuilder: ISelectionIdBuilder;
         private selectionManager: ISelectionManager;
-        private tooltipServiceWrapper: ITooltipServiceWrapper;
+        private tooltipServiceWrapper: tooltip.ITooltipServiceWrapper;
         private model: VisualViewModel;
-
+        private legend: ILegend;
         private element: d3.Selection<HTMLElement>;
 
         constructor(options: VisualConstructorOptions) {
 
+            this.meta = {
+                name: 'Bullet Chart',
+                version: '2.1.2',
+                dev: false
+            };
+            console.log('%c' + this.meta.name + ' by OKViz ' + this.meta.version + (this.meta.dev ? ' (BETA)' : ''), 'font-weight:bold');
+
             this.host = options.host;
             this.selectionIdBuilder = options.host.createSelectionIdBuilder();
             this.selectionManager = options.host.createSelectionManager();
-            this.tooltipServiceWrapper = createTooltipServiceWrapper(options.host.tooltipService, options.element);
-            this.model = { dataPoints: [], legendDataPoints:[], domain: {startForced: false, endForced: false},  settings: <VisualSettings>{}, hasHighlights: false, hasCategories: false };
-
+            this.tooltipServiceWrapper = tooltip.createTooltipServiceWrapper(options.host.tooltipService, options.element);
+            this.model = { dataPoints: [], enumerationDataPoints:[], legendDataPoints:[], legendDataPointsWithCustomIcons:[], domain: {startForced: false, endForced: false},  settings: <VisualSettings>{}, hasHighlights: false, hasCategories: false };
+            
             this.element = d3.select(options.element);
+            this.legend = LegendModule.createLegend($(options.element), false, null, true, LegendPosition.Top);
         }
 
         public update(options: VisualUpdateOptions) {
+            
             this.model = visualTransform(options, this.host);
-            this.element.selectAll('div, svg').remove();
+            this.element.selectAll('div, svg:not(.legend)').remove();
             if (this.model.dataPoints.length == 0) return; 
 
             let isVertical = (this.model.settings.general.orientation === 'v');
@@ -515,6 +621,26 @@ module powerbi.extensibility.visual {
 
             //Clone domain - the ugly way
             let domain: VisualDomain = {start: this.model.domain.start, end: this.model.domain.end, startForced: this.model.domain.startForced, endForced: this.model.domain.endForced };
+
+            //Legend
+            if (this.model.settings.legend.show && this.model.legendDataPoints.length > 0) {
+        
+                this.legend.changeOrientation(<any>LegendPosition[this.model.settings.legend.position]);
+                this.legend.drawLegend(<LegendData>{
+                    title: this.model.settings.legend.titleText,
+                    dataPoints: this.model.legendDataPoints,
+                    labelColor: this.model.settings.legend.labelColor.solid.color,
+                    fontSize: this.model.settings.legend.fontSize
+                }, options.viewport);
+
+                replaceLegendIconsWithCustom(this.model.legendDataPointsWithCustomIcons);
+                
+                appendLegendMargins(this.legend, margin);
+  
+            } else {
+
+                this.legend.drawLegend({ dataPoints: [] }, options.viewport);
+            }
 
             //Axis Formatter
             let xFormatter;
@@ -622,8 +748,8 @@ module powerbi.extensibility.visual {
                 .append('div')
                 .classed('chart', true)
                 .style({
-                    'width' :  containerSize.width + 'px',
-                    'height':  containerSize.height + 'px',
+                    'width' :  Math.max(0, containerSize.width) + 'px',
+                    'height':  Math.max(0, containerSize.height) + 'px',
                     'overflow-x': (isVertical ? (this.model.dataPoints.length > 1 ? 'auto' : 'hidden') : 'hidden'),
                     'overflow-y': (isVertical ? 'hidden' : (this.model.dataPoints.length > 1 ? 'auto' : 'hidden')),
                     'margin-top': margin.top + 'px',
@@ -812,8 +938,8 @@ module powerbi.extensibility.visual {
                             .style('fill', state.color)
                             .attr('x', bulletPosition.x + (isVertical ? 0 : labelSize.width + labelPadding + startScaledValue))
                             .attr('y', bulletPosition.y + (isVertical ? bulletSize.height - scaledValue : 0))
-                            .attr('width',  (isVertical ? bulletSize.width : scaledValue - startScaledValue))
-                            .attr('height', (isVertical ? scaledValue - startScaledValue : bulletSize.height));
+                            .attr('width',  Math.max(0, (isVertical ? bulletSize.width : scaledValue - startScaledValue)))
+                            .attr('height', Math.max(0, (isVertical ? scaledValue - startScaledValue : bulletSize.height)));
                         
                         if (changeOpacity)
                             range.style('opacity', '0.3');
@@ -835,8 +961,8 @@ module powerbi.extensibility.visual {
                     comparison
                         .attr('x', bulletPosition.x + (isVertical ? bulletSize.width / divider : labelSize.width + labelPadding + startScaledValue))
                         .attr('y', bulletPosition.y + (isVertical ? bulletSize.height - scaledValue : bulletSize.height / divider))
-                        .attr('width', (isVertical ? bulletSize.width - (bulletSize.width / divider) * 2 : scaledValue - startScaledValue))
-                        .attr('height', (isVertical ? scaledValue - startScaledValue : bulletSize.height - (bulletSize.height / divider) * 2));
+                        .attr('width', Math.max(0, (isVertical ? bulletSize.width - (bulletSize.width / divider) * 2 : scaledValue - startScaledValue)))
+                        .attr('height', Math.max(0, (isVertical ? scaledValue - startScaledValue : bulletSize.height - (bulletSize.height / divider) * 2)));
 
                     if (changeOpacity)
                         comparison.style('opacity', '0.3');
@@ -865,8 +991,8 @@ module powerbi.extensibility.visual {
                     measure
                         .attr('x', measurePos.x)
                         .attr('y', measurePos.y)
-                        .attr('width', (isVertical ? bulletSize.width - (bulletSize.width / divider) * 2 : scaledValue - startScaledValue))
-                        .attr('height', (isVertical ? scaledValue - startScaledValue : bulletSize.height - (bulletSize.height / divider) * 2));
+                        .attr('width', Math.max(0, (isVertical ? bulletSize.width - (bulletSize.width / divider) * 2 : scaledValue - startScaledValue)))
+                        .attr('height', Math.max(0, (isVertical ? scaledValue - startScaledValue : bulletSize.height - (bulletSize.height / divider) * 2)));
 
                     //Highlight value
                     if (this.model.hasHighlights)
@@ -892,8 +1018,8 @@ module powerbi.extensibility.visual {
                     measure
                         .attr('x', measurePos.x)
                         .attr('y', measurePos.y)
-                        .attr('width', (isVertical ? bulletSize.width - (bulletSize.width / divider) * 2 : scaledValue - startScaledValue))
-                        .attr('height', (isVertical ? scaledValue - startScaledValue : bulletSize.height - (bulletSize.height / divider) * 2));
+                        .attr('width', Math.max(0, (isVertical ? bulletSize.width - (bulletSize.width / divider) * 2 : scaledValue - startScaledValue)))
+                        .attr('height', Math.max(0, (isVertical ? scaledValue - startScaledValue : bulletSize.height - (bulletSize.height / divider) * 2)));
                 }
 
                
@@ -1071,9 +1197,15 @@ module powerbi.extensibility.visual {
 
                             if (dataLabelPos.x > labelPosRange.max || dataLabelPos.x < labelPosRange.min)
                                 showDataLabel = false;
+                            
 
-                            if (dataLabelPos.x - (isNegative ? (dataLabelSize.width / 3 * 2) : 0) > measurePos.x && dataLabelPos.x + (isNegative ? 0 : (dataLabelSize.width / 3 * 2)) < measurePos.x + (scaledValue - startScaledValue)) {
-                                dataLabelFill = '#fff';
+
+                            if (dataLabelPos.x > measurePos.x && dataLabelPos.x < measurePos.x + (scaledValue - startScaledValue)) {
+                                
+                                dataLabelPos.x = measurePos.x + (scaledValue - startScaledValue) - dataLabelSize.width - labelPadding;
+
+                                if (this.model.settings.dataLabels.fill.solid.color == defaultSettings().dataLabels.fill.solid.color)
+                                    dataLabelFill = '#fff';
                             }
                          }
                     }
@@ -1093,14 +1225,13 @@ module powerbi.extensibility.visual {
 
             //Tooltips
             this.tooltipServiceWrapper.addTooltip(svgBulletContainer.selectAll('.bullet'), 
-                function(tooltipEvent: TooltipEventArgs<number>){
+                function(tooltipEvent: tooltip.TooltipEventArgs<number>){
                     let dataPoint: VisualDataPoint = tooltipEvent.data;
                     if (dataPoint && dataPoint.tooltips)
                         return dataPoint.tooltips;
                     
                     return null;
-                }, 
-                (tooltipEvent: TooltipEventArgs<number>) => null
+                }
             );
 
             //Axis
@@ -1150,11 +1281,11 @@ module powerbi.extensibility.visual {
             });
 
 
-            OKVizUtility.t(['Bullet Chart', '2.1.1'], this.element, options, this.host, {
+            OKVizUtility.t([this.meta.name, this.meta.version], this.element, options, this.host, {
                 'cd1': this.model.settings.colorBlind.vision, 
                 'cd2': this.model.dataPoints[0].targets.length, 
                 'cd3': this.model.settings.targets.comparison,
-                'cd6': false, //TODO Change when Legend will be available
+                'cd6': this.model.settings.legend.show,
                 'cd12': this.model.settings.general.orientation
             });
 
@@ -1164,7 +1295,7 @@ module powerbi.extensibility.visual {
 
 
         public destroy(): void {
- 
+
         }
 
         public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
@@ -1203,42 +1334,42 @@ module powerbi.extensibility.visual {
                  
                         if (this.model.settings.dataPoint.showAll) {
                             let maxDataPoints = 1000;
-                            for(let i = 0; i < Math.min(maxDataPoints, this.model.legendDataPoints.length); i++) {
-                                let legendDataPoint = this.model.legendDataPoints[i];
+                            for(let i = 0; i < Math.min(maxDataPoints, this.model.enumerationDataPoints.length); i++) {
+                                let enumerateDataPoint = this.model.enumerationDataPoints[i];
 
-                                if (legendDataPoint.showOnDemand) {
+                                if (enumerateDataPoint.showOnDemand) {
                                     objectEnumeration.push({
                                         objectName: objectName,
-                                        displayName: legendDataPoint.displayName,
+                                        displayName: enumerateDataPoint.displayName,
                                         properties: {
                                             "fill": {
                                                 solid: {
-                                                    color: legendDataPoint.color
+                                                    color: enumerateDataPoint.color
                                                 }
                                             }
                                         },
-                                        selector: legendDataPoint.selectionId.getSelector()
+                                        selector: enumerateDataPoint.selectionId.getSelector()
                                     });
                                 }
                             }
                         }
                     }
 
-                    for(let i = 0; i < this.model.legendDataPoints.length; i++) {
-                        let legendDataPoint = this.model.legendDataPoints[i];
+                    for(let i = 0; i < this.model.enumerationDataPoints.length; i++) {
+                        let enumerateDataPoint = this.model.enumerationDataPoints[i];
 
-                        if (!legendDataPoint.showOnDemand) {
+                        if (!enumerateDataPoint.showOnDemand) {
                             objectEnumeration.push({
                                 objectName: objectName,
-                                displayName: legendDataPoint.displayName,
+                                displayName: enumerateDataPoint.displayName,
                                 properties: {
                                     "fill": {
                                         solid: {
-                                            color: legendDataPoint.color
+                                            color: enumerateDataPoint.color
                                         }
                                     }
                                 },
-                                selector: legendDataPoint.selectionId.getSelector()
+                                selector: enumerateDataPoint.selectionId.getSelector()
                             });
                         }
                     }
@@ -1331,7 +1462,7 @@ module powerbi.extensibility.visual {
                     break;
 
                 case "states":
-                   
+                    
                     if (dataPoint.states && dataPoint.states.length > 0) {
                         
                         for (let i = 0; i < dataPoint.states.length; i++){
@@ -1398,6 +1529,23 @@ module powerbi.extensibility.visual {
 
                     break;
                 
+                case 'legend':
+                    
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
+                            "show": this.model.settings.legend.show,
+                            "position": this.model.settings.legend.position,
+                            "showTitle": this.model.settings.legend.showTitle,
+                            "titleText": this.model.settings.legend.titleText,
+                            "labelColor": this.model.settings.legend.labelColor,
+                            "fontSize": this.model.settings.legend.fontSize
+                        },
+                        selector: null
+                    });
+
+                    break;
+                
                  case 'colorBlind':
                     
                     objectEnumeration.push({
@@ -1415,5 +1563,6 @@ module powerbi.extensibility.visual {
 
             return objectEnumeration;
         }
+
     }
 }

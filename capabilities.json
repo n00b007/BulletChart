@@ -475,6 +475,86 @@
                 }
             }
         },
+        "legend": {
+            "displayName": "Legend",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": { 
+                        "bool": true 
+                    }
+                },
+                "position": {
+                    "displayName": "Position",
+                    "type": { 
+                        "enumeration": [
+                             {
+                                "displayName": "Top",
+                                "value": "Top"
+                            },
+                            {
+                                "displayName": "Bottom",
+                                "value": "Bottom"
+                            },
+                            {
+                                "displayName": "Right",
+                                "value": "Right"
+                            },
+                            {
+                                "displayName": "Left",
+                                "value": "Left"
+                            },
+                            {
+                                "displayName": "Top Center",
+                                "value": "TopCenter"
+                            },
+                            {
+                                "displayName": "Bottom Center",
+                                "value": "BottomCenter"
+                            },
+                            {
+                                "displayName": "Right Center",
+                                "value": "RightCenter"
+                            },
+                            {
+                                "displayName": "Left Center",
+                                "value": "LeftCenter"
+                            }
+                        ] 
+                    }
+                },
+                "showTitle": {
+                    "displayName": "Title",
+                    "type": { 
+                        "bool": true 
+                    }
+                },
+                "titleText": {
+                    "displayName": "Legend name",
+                    "type": { 
+                        "text": true 
+                    }
+                },
+                "labelColor": {
+                    "displayName": "Color",
+                    "type": { 
+                        "fill": { 
+                            "solid": { 
+                                "color": true 
+                            } 
+                        } 
+                    }
+                },
+                "fontSize": {
+                    "displayName": "Text size",
+                    "type": { 
+                        "formatting": { 
+                            "fontSize": true 
+                        } 
+                    }
+                }
+            }
+        },
 
         "colorBlind": {
             "displayName": "Color Blindness by OKViz",

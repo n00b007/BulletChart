@@ -1,12 +1,12 @@
 /*
  * OKViz Utilities
- * v1.2.0
+ * v1.2.1
 */
 
-namespace powerbi.visuals { export let valueFormatter: any; }
+import valueFormatter = powerbi.extensibility.utils.formatting.valueFormatter;
 
 module powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA  {
-
+    
     export module OKVizUtility {
 
          export class Formatter {
@@ -15,8 +15,6 @@ module powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA 
             private _cachedFormatters: any = {};
 
             constructor() {
-
-                Globalize = (<any>window).Globalize;
 
                 if(Formatter._instance){
                     console.log("Error: use Formatter.getInstance() instead of new.");
@@ -38,7 +36,7 @@ module powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA 
                 if (key in singleton._cachedFormatters) {
                     pbiFormatter = singleton._cachedFormatters[key];
                 } else {
-                    pbiFormatter = powerbi.visuals.valueFormatter.create(properties);
+                    pbiFormatter = valueFormatter.create(properties);
                     singleton._cachedFormatters[key] = pbiFormatter;
                 }
                 return pbiFormatter;
@@ -85,7 +83,6 @@ module powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA 
             }
 
         }
-
 
         //Need capability:  "t": { "properties": { "u": { "type": { "text": true } } } }
         export function t(visual: string[], element: any, options: VisualUpdateOptions, host: IVisualHost, features?: any) {
