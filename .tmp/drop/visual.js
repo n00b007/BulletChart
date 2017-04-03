@@ -15192,7 +15192,11 @@ var powerbi;
                         element.selectAll('#visionFilter').remove();
                         element.append('svg')
                             .attr('id', 'visionFilter')
-                            .style('position', 'absolute')
+                            .style({
+                            'position': 'absolute',
+                            'width': 0,
+                            'height': 0
+                        })
                             .html(visionDefs);
                         element.style({
                             'filter': 'url(#vision' + vision + ')',
@@ -15608,7 +15612,7 @@ var powerbi;
                     function Visual(options) {
                         this.meta = {
                             name: 'Bullet Chart',
-                            version: '2.1.2',
+                            version: '2.1.3',
                             dev: false
                         };
                         console.log('%c' + this.meta.name + ' by OKViz ' + this.meta.version + (this.meta.dev ? ' (BETA)' : ''), 'font-weight:bold');
@@ -15749,10 +15753,6 @@ var powerbi;
                         });
                         var svgAxisContainer = this.element
                             .append('svg')
-                            .attr({
-                            width: '100%',
-                            height: '100%'
-                        })
                             .style({
                             'position': 'absolute',
                             'top': margin.top + 'px',
@@ -16117,16 +16117,6 @@ var powerbi;
                         //Axis
                         if (this.model.settings.axis.show) {
                             var numTicks = Math.max(Math.floor(isVertical ? bulletSize.height / 30 : bulletSize.width / 80), 2);
-                            /*
-                            let ticksArr = axisScale.ticks(numTicks);
-                            if (numTicks < 2) ticksArr.unshift(domain.start);
-                            let interval = ticksArr[1] - ticksArr[0];
-                            if (ticksArr[0] != domain.start) {
-                                if (ticksArr[0] - domain.start < interval / 2) ticksArr.shift();
-                                ticksArr.unshift(domain.start);
-                            }
-                            xAxis.tickValues(ticksArr)
-                            */
                             var xAxis = d3.svg.axis().ticks(numTicks).outerTickSize(0).tickFormat(function (d) { return xFormatter.format(d); }).tickSize((isVertical ? containerSize.width : Math.min((slotSize.height * this.model.dataPoints.length), containerSize.height) + labelPadding)).orient(isVertical ? "left" : "bottom");
                             var axis = svgAxisContainer.selectAll("g.axis").data([0]);
                             axis.enter().append("g")
@@ -16154,7 +16144,8 @@ var powerbi;
                             'cd2': this.model.dataPoints[0].targets.length,
                             'cd3': this.model.settings.targets.comparison,
                             'cd6': this.model.settings.legend.show,
-                            'cd12': this.model.settings.general.orientation
+                            'cd12': this.model.settings.general.orientation,
+                            'cd15': this.meta.dev
                         });
                         //Color Blind module
                         PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.OKVizUtility.applyColorBlindVision(this.model.settings.colorBlind.vision, this.element);
@@ -16403,7 +16394,7 @@ var powerbi;
                 name: 'PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA',
                 displayName: 'Bullet Chart by OKViz',
                 class: 'Visual',
-                version: '2.1.2',
+                version: '2.1.3',
                 apiVersion: '1.5.0',
                 create: function (options) { return new powerbi.extensibility.visual.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA.Visual(options); },
                 custom: true

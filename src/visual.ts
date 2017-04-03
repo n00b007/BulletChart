@@ -591,7 +591,7 @@ module powerbi.extensibility.visual {
 
             this.meta = {
                 name: 'Bullet Chart',
-                version: '2.1.2',
+                version: '2.1.3',
                 dev: false
             };
             console.log('%c' + this.meta.name + ' by OKViz ' + this.meta.version + (this.meta.dev ? ' (BETA)' : ''), 'font-weight:bold');
@@ -609,8 +609,10 @@ module powerbi.extensibility.visual {
         public update(options: VisualUpdateOptions) {
             
             this.model = visualTransform(options, this.host);
+
             this.element.selectAll('div, svg:not(.legend)').remove();
             if (this.model.dataPoints.length == 0) return; 
+
 
             let isVertical = (this.model.settings.general.orientation === 'v');
             let margin = { top: 10, left: 2, bottom: 0, right: 0 }; //Space from boundaries
@@ -662,7 +664,7 @@ module powerbi.extensibility.visual {
                 });
             }
 
-            
+
             if (this.model.settings.axis.show) {
                 if (isVertical) {
                     margin.left += axisSize.width;
@@ -756,7 +758,7 @@ module powerbi.extensibility.visual {
                     'margin-left': margin.left + 'px'
                 });
 
-            
+          
             let svgBulletContainer = bulletContainer
                 .append('svg')
                 .attr({
@@ -766,10 +768,6 @@ module powerbi.extensibility.visual {
 
              let svgAxisContainer = this.element
                 .append('svg')
-                 .attr({
-                    width: '100%',
-                    height:'100%'
-                })
                 .style({
                     'position': 'absolute',
                     'top': margin.top + 'px',
@@ -777,7 +775,7 @@ module powerbi.extensibility.visual {
                     'z-index': '-999',
                     'overflow': 'visible'
                 });
-            
+
              let bulletSize = {
                     width: (isVertical ? slotSize.width - (bulletPadding * 2) : slotSize.width - labelSize.width - labelPadding),
                     height: (isVertical ? slotSize.height - labelPadding - (labelRotation == 0 ? labelSize.height : labelSize.width) : slotSize.height - (bulletPadding * 2))
@@ -792,7 +790,7 @@ module powerbi.extensibility.visual {
 
             domain.start = axisScale.domain()[0];
             domain.end = axisScale.domain()[1];
-                
+
             //Render bullets
             for (let i = 0; i < this.model.dataPoints.length; i++) {
                 let dataPoint = this.model.dataPoints[i];
@@ -1022,7 +1020,6 @@ module powerbi.extensibility.visual {
                         .attr('height', Math.max(0, (isVertical ? scaledValue - startScaledValue : bulletSize.height - (bulletSize.height / divider) * 2)));
                 }
 
-               
 
                 //Targets
                 let markerColor = this.model.settings.targets.markerFill.solid.color;
@@ -1170,9 +1167,6 @@ module powerbi.extensibility.visual {
                             if (dataLabelPos.y > labelPosRange.max || dataLabelPos.y < labelPosRange.min)
                                 showDataLabel = false;
 
-                            /*if (dataLabelPos.y > (bulletSize.height - measurePos.y) && dataLabelPos.y + (dataLabelSize.height / 3 * 2) < (bulletSize.height - measurePos.y) + (scaledValue - startScaledValue)) {
-                                dataLabelFill = '#fff';
-                            }*/
                         }
 
                     } else {
@@ -1239,16 +1233,6 @@ module powerbi.extensibility.visual {
 
                 let numTicks = Math.max(Math.floor(isVertical ? bulletSize.height / 30 :  bulletSize.width / 80), 2);
 
-                /*
-                let ticksArr = axisScale.ticks(numTicks);
-                if (numTicks < 2) ticksArr.unshift(domain.start);
-                let interval = ticksArr[1] - ticksArr[0];
-                if (ticksArr[0] != domain.start) {
-                    if (ticksArr[0] - domain.start < interval / 2) ticksArr.shift();
-                    ticksArr.unshift(domain.start);
-                }
-                xAxis.tickValues(ticksArr)
-                */
                 let xAxis = d3.svg.axis().ticks(numTicks).outerTickSize(0).tickFormat(d => xFormatter.format(d)).tickSize((isVertical ? containerSize.width : Math.min((slotSize.height * this.model.dataPoints.length), containerSize.height)  + labelPadding)).orient(isVertical ? "left" : "bottom");
 
                 let axis = svgAxisContainer.selectAll("g.axis").data([0]);
@@ -1279,18 +1263,19 @@ module powerbi.extensibility.visual {
 
                 (<Event>d3.event).stopPropagation();
             });
-
-
+            
             OKVizUtility.t([this.meta.name, this.meta.version], this.element, options, this.host, {
                 'cd1': this.model.settings.colorBlind.vision, 
                 'cd2': this.model.dataPoints[0].targets.length, 
                 'cd3': this.model.settings.targets.comparison,
                 'cd6': this.model.settings.legend.show,
-                'cd12': this.model.settings.general.orientation
+                'cd12': this.model.settings.general.orientation,
+                'cd15': this.meta.dev
             });
 
             //Color Blind module
             OKVizUtility.applyColorBlindVision(this.model.settings.colorBlind.vision, this.element);
+
         }
 
 
