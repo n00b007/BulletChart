@@ -16390,8 +16390,8 @@ var powerbi;
     (function (visuals) {
         var plugins;
         (function (plugins) {
-            plugins.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA = {
-                name: 'PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA',
+            plugins.PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA_DEBUG = {
+                name: 'PBI_CV_9272D058_BEA0_476A_B090_A712545F92FA_DEBUG',
                 displayName: 'Bullet Chart by OKViz',
                 class: 'Visual',
                 version: '2.1.3',
