@@ -3,6 +3,7 @@
   "dependencies": {
     "powerbi-visuals-utils-chartutils": "^0.3.0",
     "powerbi-visuals-utils-formattingutils": "^0.4.0",
+    "powerbi-visuals-utils-interactivityutils": "^1.0.0",
     "powerbi-visuals-utils-tooltiputils": "^0.3.0"
   }
 }

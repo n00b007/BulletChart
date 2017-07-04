@@ -412,7 +412,8 @@ module powerbi.extensibility.visual {
                                 let highlightFormattedValue = OKVizUtility.Formatter.format(dataPoint.highlightValue, {
                                     format: dataValue.source.format,
                                     formatSingleValues: true,
-                                    allowFormatBeautification: false
+                                    allowFormatBeautification: false,
+                                    cultureSelector: host.locale
                                 });
                             
                                 dataPoint.tooltips.push(<VisualTooltipDataItem>{
@@ -543,7 +544,8 @@ module powerbi.extensibility.visual {
                         let formattedValue = OKVizUtility.Formatter.format(value, {
                             format: dataValue.source.format,
                             formatSingleValues: true,
-                            allowFormatBeautification: false
+                            allowFormatBeautification: false,
+                            cultureSelector: host.locale
                         });
                         
                         dataPoint.tooltips.push(<VisualTooltipDataItem>{
@@ -591,7 +593,7 @@ module powerbi.extensibility.visual {
 
             this.meta = {
                 name: 'Bullet Chart',
-                version: '2.1.3',
+                version: '2.1.4',
                 dev: false
             };
             console.log('%c' + this.meta.name + ' by OKViz ' + this.meta.version + (this.meta.dev ? ' (BETA)' : ''), 'font-weight:bold');
@@ -654,7 +656,8 @@ module powerbi.extensibility.visual {
                     value: this.model.settings.axis.unit,
                     precision: this.model.settings.axis.precision,
                     displayUnitSystemType: 0,
-                    allowFormatBeautification: true
+                    allowFormatBeautification: true,
+                    cultureSelector: this.host.locale
                 });
 
                 axisSize.width = TextUtility.measureTextWidth({
@@ -1128,7 +1131,8 @@ module powerbi.extensibility.visual {
                         value: this.model.settings.dataLabels.unit,
                         precision: this.model.settings.dataLabels.precision,
                         displayUnitSystemType: 2,
-                        allowFormatBeautification: false
+                        allowFormatBeautification: false,
+                        cultureSelector: this.host.locale
                     });
 
                     let fontSize = PixelConverter.fromPoint(this.model.settings.dataLabels.fontSize);
