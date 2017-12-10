@@ -111,6 +111,17 @@ module powerbi.extensibility.visual {
                         if (item.icon == 'circle') {
                             icon.style('fill', item.color);
 
+                        } else if (item.icon == 'square') {
+
+                            icon.style('display', 'none');
+                            el.selectAll('rect').remove();
+                            el
+                                .append('rect')
+                                .attr('x', x - r)
+                                .attr('width', r * 2)
+                                .attr('y', y - r)
+                                .attr('height', r * 2);
+
                         } else if (item.icon == 'line') {
                             icon.style('display', 'none');
                             el.selectAll('line').remove();
