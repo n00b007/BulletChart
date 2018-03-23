@@ -4,11 +4,18 @@ Inspired by Stephen Few, the Bullet Chart by OKViz allows you to show data value
 
 ![alt tag](screenshot.png)
 
-Find out more on http://okviz.com/bullet-chart/
+Find out more on https://okviz.com/bullet-chart/
 
+## Changelog
 
-### Copyrights
+A full changelog is available here: [CHANGELOG](/CHANGELOG.md)
 
-Copyright (c) 2016-2017 OKViz - trademark of SQLBI Corp.
+## Submit an issue
+
+To submit an issue, please visit [CONTRIBUTING](/CONTRIBUTING.md)
+
+## Copyrights
+
+Copyright (c) 2016-2018 OKViz - trademark of SQLBI Corp.
 
 See the [LICENSE](/LICENSE) file for license rights and limitations (MIT).
