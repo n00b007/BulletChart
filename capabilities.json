@@ -957,8 +957,7 @@
                     }
                 }
             }
-        },
-        "t": { "properties": { "u": { "type": { "text": true } }, "lk": { "type": { "text": true }  } } }      
+        }    
     },
 
     "sorting": {

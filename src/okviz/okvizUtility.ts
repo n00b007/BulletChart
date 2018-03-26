@@ -1,6 +1,6 @@
 /*
  * OKViz Utilities
- * v1.3.0
+ * v1.4.0
 */
 
 import valueFormatter = powerbi.extensibility.utils.formatting.valueFormatter;
@@ -97,96 +97,6 @@ module powerbi.extensibility.visual {
                 return d3.time.format(format);
             }
 
-        }
-
-        export function t(visual: string[], element: any, options: VisualUpdateOptions, host: IVisualHost, features?: any) {
-                
-            if (!options || !options.dataViews || !options.dataViews[0] || !options.dataViews[0].metadata || !options.dataViews[0].metadata.objects) return;
-
-            if (options.type !== VisualUpdateType.Data && options.type !== VisualUpdateType.ViewMode && options.type !== VisualUpdateType.All) return;
-
-            let persistU = false
-            let u = getValue<string>(options.dataViews[0].metadata.objects, "t", "u", null);
-            if (!u) {
-                u = uuid();
-                persistU = true;     
-            }
-
-            let lang = navigator.language || (<any>navigator).userLanguage;
-            let cli = (window.location ? (window.location.host == 'app.powerbi.com' ? 'app.powerbi.com' : 'localhost') : ''); 
-
-            let cd = '';
-            if (features) {
-                for (let key in features)
-                    cd += '&' + key + '=' + features[key];
-            }
-
-            let url = 'https://www.google-analytics.com/collect?v=1&t=screenview&tid=UA-7095697-25&cid=' + u + '&an=' + visual[0] + '&av=' + visual[1] + '&ul=' + lang + '&cd=' + cli + cd;
-
-            let sc = '';
-
-            let el = (element instanceof d3.selection ? element : d3.select(element instanceof jQuery ? element[0] : element));
-            let t = el.select('img.okty');
-            if (t.empty()) {
-                t = el.append('img')
-                    .classed('okty', true)
-                    .style({'width': 0, 'height': 0, 'position': 'absolute', 'visibility' : 'hidden' });
-                sc = '&sc=start';
-            }
-
-            t.attr('src', url + sc + '&nocache=' + new Date().getTime());
-
-            if (persistU) {
-                host.persistProperties({
-                    merge: [{
-                        objectName: 't',
-                        selector: null,
-                        properties: { 'u': u },
-                    }]
-                });
-            }  
-        }
-
-        export function lic_log(meta, options, host) {
-
-            let tableURL = 'https://okvizviews.table.core.windows.net:443/Log?st=2017-10-09T00%3A00%3A00Z&se=2099-10-10T00%3A00%3A00Z&sp=a&sv=2016-05-31&tn=log&sig=nsLxYVKZhPJnOqMaTuQobCRiGJmeqamhPC%2ByAgloVv4%3D';
-            let today = new Date();
-
-            let persistU = false
-            let u = getValue<string>(options.dataViews[0].metadata.objects, "t", "u", null);
-            if (!u) {
-                u = uuid();
-                persistU = true;     
-            }
-            let lk = getValue<string>(options.dataViews[0].metadata.objects, "t", "lk", null);
-
-            let data = {
-                'PartitionKey': today.toISOString().slice(0,7).replace('-',''),
-                'RowKey': uuid(),
-                'TimeZoneOffset': today.getTimezoneOffset(),
-                'VisualId': u,
-                'LicenseKey': lk,
-                'VisualName': meta.name,
-                'VisualVersion': meta.version,
-                'VisualBeta': meta.dev
-            };
-
-            $.ajax({
-                url: tableURL,
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(data)
-            });
-
-            if (persistU) {
-                host.persistProperties({
-                    merge: [{
-                        objectName: 't',
-                        selector: null,
-                        properties: { 'u': u },
-                    }]
-                });
-            }  
         }
 
         export function uuid() {
@@ -373,16 +283,19 @@ module powerbi.extensibility.visual {
 
             if (typeof URL === 'undefined' || !URL) return false;
             if (URL.length > 2083) return false;
-            if (String(URL).substr(0, 4).toLowerCase() !== 'http') return false; //This solve regex problems with binary strings
+
+            let pattern = new RegExp('^https?:\\/\\/', 'i');
+            return pattern.test(URL);
             
-            var pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+            /*
+            let pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
                 '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' + // domain name
                 '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
                 '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
                 '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
                 '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
             return pattern.test(URL);
-
+            */
         }
         
         export function makeMeasureReadable(value: any) {

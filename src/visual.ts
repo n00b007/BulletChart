@@ -355,6 +355,17 @@ module powerbi.extensibility.visual {
                         cultureSelector: settings.dataLabels.locale
                     });
 
+                    let addToLegend = (i == 0);
+                    if (!addToLegend && (dataValue.source.roles['Value'] || dataValue.source.roles['ComparisonValue'] || dataValue.source.roles['targets'])) {
+                        addToLegend = true;
+                        for(let l = 0; l < legendDataPoints.length; l++) {
+                            if (legendDataPoints[l].label == dataValue.source.displayName) {
+                                addToLegend = false;
+                                break;
+                            }
+                        }
+                    }
+
                     if (dataValue.source.roles['Value']){ //value -> Value for legacy compatibility
                  
                         //if (value !== null) { //This cause problems when there is a comparison measure
@@ -414,7 +425,8 @@ module powerbi.extensibility.visual {
                                 selectionId: identity
                             });
 
-                            if (i == 0) {
+                            
+                            if (addToLegend) {
                                 legendDataPoints.push({
                                     label: dataValue.source.displayName,
                                     color: color,
@@ -428,7 +440,7 @@ module powerbi.extensibility.visual {
                                 header: headerName,
                                 displayName: dataValue.source.displayName,
                                 color: (color || '#333'),
-                                value: tooltipsFormatter.format(value)
+                                value: (value == undefined ? '(Blank)' : tooltipsFormatter.format(value))
                             });
 
                             if (dataValue.highlights) {
@@ -438,7 +450,7 @@ module powerbi.extensibility.visual {
                                 dataPoint.tooltips.push(<VisualTooltipDataItem>{
                                     displayName: 'Highlighted',
                                     color: (color || '#333'),
-                                    value: tooltipsFormatter.format(dataPoint.highlightValue)
+                                    value: (dataPoint.highlightValue == undefined ? '(Blank)' : tooltipsFormatter.format(dataPoint.highlightValue))
                                 });
                         
                             }
@@ -469,7 +481,7 @@ module powerbi.extensibility.visual {
                                 });
                             }
                             
-                            if (i == 0) {
+                            if (addToLegend) {
                                 legendDataPoints.push({
                                     label: dataValue.source.displayName,
                                     color: color,
@@ -482,7 +494,7 @@ module powerbi.extensibility.visual {
                             dataPoint.tooltips.push(<VisualTooltipDataItem>{
                                 displayName: dataValue.source.displayName,
                                 color: (color || '#333'),
-                                value: tooltipsFormatter.format(value)
+                                value: (value == undefined ? '(Blank)' : tooltipsFormatter.format(value))
                             });
 
                             checkDomain = true;
@@ -514,7 +526,7 @@ module powerbi.extensibility.visual {
                                  selectionId: identity
                              }); 
 
-                             if (i == 0) {
+                             if (addToLegend) {
                                 if (marker != 'hidden') {
                                     legendDataPoints.push({
                                         label: dataValue.source.displayName,
@@ -534,7 +546,7 @@ module powerbi.extensibility.visual {
                             dataPoint.tooltips.push(<VisualTooltipDataItem>{
                                 displayName: dataValue.source.displayName,
                                 color: (marker == 'hidden' ? '#333' : settings.targets.markerFill.solid.color),
-                                value: tooltipsFormatter.format(value)
+                                value: (value == undefined ? '(Blank)' : tooltipsFormatter.format(value))
                             });
                             
                             checkDomain = true;
@@ -564,7 +576,7 @@ module powerbi.extensibility.visual {
                             dataPoint.tooltips.push(<VisualTooltipDataItem>{
                                 displayName: dataValue.source.displayName,
                                 color: '#333',
-                                value: tooltipsFormatter.format(value)
+                                value: (value == undefined ? '(Blank)' : tooltipsFormatter.format(value))
                             });
                         }
                     }
@@ -609,7 +621,6 @@ module powerbi.extensibility.visual {
         private selectionManager: ISelectionManager;
         private tooltipServiceWrapper: tooltip.ITooltipServiceWrapper;
         private model: VisualViewModel;
-        private licced: boolean;
         private legend: ILegend;
         private element: d3.Selection<HTMLElement>;
 
@@ -617,7 +628,7 @@ module powerbi.extensibility.visual {
 
             this.meta = {
                 name: 'Bullet Chart',
-                version: '2.1.5',
+                version: '2.1.6',
                 dev: false
             };
 
@@ -694,7 +705,7 @@ module powerbi.extensibility.visual {
 
             if (this.model.settings.axis.show) {
                 if (isVertical) {
-                    margin.left += axisSize.width;
+                    margin.left += axisSize.width + 10;
                 } else {
                     margin.bottom += axisSize.height;
                 }
@@ -1328,21 +1339,7 @@ module powerbi.extensibility.visual {
 
                 (<Event>d3.event).stopPropagation();
             });
-            
-            OKVizUtility.t([this.meta.name, this.meta.version], this.element, options, this.host, {
-                'cd1': this.model.settings.colorBlind.vision, 
-                'cd2': this.model.dataPoints[0].targets.length, 
-                'cd3': this.model.settings.targets.comparison,
-                'cd6': this.model.settings.legend.show,
-                'cd12': this.model.settings.general.orientation,
-                'cd15': this.meta.dev
-            });
-
-            if (!this.licced) {
-                this.licced = true;
-                OKVizUtility.lic_log(this.meta, options, this.host);
-            }
-
+ 
             //Color Blind module
             OKVizUtility.applyColorBlindVision(this.model.settings.colorBlind.vision, this.element);
 
